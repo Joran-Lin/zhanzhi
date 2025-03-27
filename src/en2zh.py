@@ -12,10 +12,14 @@ import concurrent.futures
 st.set_page_config(page_title="PDF翻译工具", layout="wide")
 st.title("PDF 转 Word 并翻译工具")
 
-# API配置
-DOUBAO_API_KEY = "ad8016f6-641c-494f-8f2d-1425d8dd2e08"  # 请替换为你的实际API密钥
-DOUBAO_API_URL = "https://ark.cn-beijing.volces.com/api/v3"  # 假设的API地址，请替换为实际地址
-ZHIPU_API_KEY = "22077bfa73e94c518393f921d00d1d48.7PIvlmDe1ynfEtot"  # 请替换为你的实际API密钥
+# 初始API配置（需要用户输入）
+DOUBAO_API_KEY = ""
+ZHIPU_API_KEY = ""
+
+def check_tokens(doubao_token, zhipu_token):
+    """简单验证token格式"""
+    # 这里可以添加更复杂的验证逻辑
+    return len(doubao_token) > 10 and len(zhipu_token) > 10
 
 def pdf_to_word(pdf_path, word_path):
     """将PDF转换为Word文档"""
@@ -33,7 +37,7 @@ def doubao_translate_text(text, target_lang='zh'):
     """使用豆包API翻译文本"""
     client = OpenAI(
         api_key=DOUBAO_API_KEY,
-        base_url=DOUBAO_API_URL,
+        base_url="https://ark.cn-beijing.volces.com/api/v3",  # 豆包API地址
     )
     completion = client.chat.completions.create(
         model='doubao-1-5-lite-32k-250115',
@@ -82,14 +86,13 @@ def process_cell(cell, target_lang):
         if cell.text.strip():
             # 使用智谱翻译表格内容
             translated_text = zhipu_translate_text(cell.text)
-            if '很抱歉，您提供的信息似乎不完整。请上传需要翻译的文本内容，我将根据您的要求进行翻译。' not in translated_text:
-                if len(cell.paragraphs) > 0:
-                    cell.paragraphs[0].text = translated_text
-                    # 清除多余段落
-                    for para in cell.paragraphs[1:]:
-                        para.clear()
-                else:
-                    cell.text = translated_text
+            if len(cell.paragraphs) > 0:
+                cell.paragraphs[0].text = translated_text
+                # 清除多余段落
+                for para in cell.paragraphs[1:]:
+                    para.clear()
+            else:
+                cell.text = translated_text
     except Exception as e:
         print(f"处理单元格失败: {e}")
 
@@ -145,6 +148,25 @@ def save_word_document(doc, output_path):
     doc.save(output_path)
 
 def main():
+    global DOUBAO_API_KEY, ZHIPU_API_KEY
+    
+    # 添加API密钥输入区域
+    with st.sidebar:
+        st.header("API 配置")
+        DOUBAO_API_KEY = st.text_input("输入豆包API Token", type="password")
+        ZHIPU_API_KEY = st.text_input("输入智谱API Token", type="password")
+        
+        if st.button("验证Token"):
+            if check_tokens(DOUBAO_API_KEY, ZHIPU_API_KEY):
+                st.success("Token格式验证通过!")
+            else:
+                st.error("Token格式不正确，请检查!")
+    
+    # 检查是否已输入API密钥
+    if not DOUBAO_API_KEY or not ZHIPU_API_KEY:
+        st.warning("请先在左侧边栏输入豆包和智谱的API Token以使用服务")
+        return
+    
     # 文件上传区域
     uploaded_file = st.file_uploader("上传PDF文件", type=["pdf"])
     
@@ -174,6 +196,10 @@ def main():
         
         # 翻译按钮
         if st.button("开始翻译"):
+            if not check_tokens(DOUBAO_API_KEY, ZHIPU_API_KEY):
+                st.error("API Token无效，请检查!")
+                return
+                
             translated_doc = translate_word_document(doc, paragraphs, source_lang, target_lang)
             
             # 保存翻译后的文档
