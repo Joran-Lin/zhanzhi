@@ -3,6 +3,8 @@ import os
 import tempfile
 from pdf2docx import Converter
 from docx import Document
+from docx.shared import Pt
+from docx.oxml.ns import qn
 from io import BytesIO
 from openai import OpenAI
 from zhipuai import ZhipuAI
@@ -18,8 +20,19 @@ ZHIPU_API_KEY = ""
 
 def check_tokens(doubao_token, zhipu_token):
     """简单验证token格式"""
-    # 这里可以添加更复杂的验证逻辑
     return len(doubao_token) > 10 and len(zhipu_token) > 10
+
+def set_document_font(doc, font_name='宋体', font_size=10.5):
+    """设置文档默认字体为宋体"""
+    # 设置全局样式
+    style = doc.styles['Normal']
+    font = style.font
+    font.name = font_name
+    font.size = Pt(font_size)
+    
+    # 处理中文字体
+    r = style._element.rPr.rFonts
+    r.set(qn('w:eastAsia'), font_name)
 
 def pdf_to_word(pdf_path, word_path):
     """将PDF转换为Word文档"""
@@ -38,7 +51,7 @@ def doubao_translate_text(text, target_lang='zh'):
     try:
         client = OpenAI(
             api_key=DOUBAO_API_KEY,
-            base_url="https://ark.cn-beijing.volces.com/api/v3",  # 豆包API地址
+            base_url="https://ark.cn-beijing.volces.com/api/v3",
         )
         completion = client.chat.completions.create(
             model='doubao-1-5-lite-32k-250115',
@@ -96,7 +109,6 @@ def process_cell(cell, target_lang):
             translated_text = zhipu_translate_text(cell.text)
             if len(cell.paragraphs) > 0:
                 cell.paragraphs[0].text = translated_text
-                # 清除多余段落
                 for para in cell.paragraphs[1:]:
                     para.clear()
             else:
@@ -121,6 +133,9 @@ def translate_word_document(doc, paragraphs, source_lang, target_lang):
     st.info("开始翻译文档...")
     progress_bar = st.progress(0)
     
+    # 设置文档字体为宋体
+    set_document_font(doc, font_name='宋体', font_size=10.5)
+    
     # 收集所有需要翻译的段落
     paragraphs_to_translate = [p for p in doc.paragraphs if p.text.strip()]
     total_paragraphs = len(paragraphs_to_translate)
@@ -133,7 +148,6 @@ def translate_word_document(doc, paragraphs, source_lang, target_lang):
             futures.append((i, future))
         
         for i, future in enumerate(concurrent.futures.as_completed([f for _, f in futures])):
-            # 更新进度条
             progress_bar.progress((i + 1) / total_paragraphs)
     
     # 翻译表格
@@ -203,7 +217,7 @@ def main():
         
         # 显示原始文本预览
         with st.expander("原始文本预览"):
-            st.write("\n\n".join(paragraphs[:10]))  # 只显示前10段
+            st.write("\n\n".join(paragraphs[:10]))
         
         # 翻译按钮
         if st.button("开始翻译"):
