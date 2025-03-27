@@ -7,3 +7,4 @@ PyMuPDF==1.23.21         # pdf2docx的底层依赖
 lxml==4.9.4              # python-docx的XML处理
 requests==2.31.0         # API调用的基础库
 tqdm==4.66.1             # 进度条显示（pdf2docx依赖）
+pdf2docx
