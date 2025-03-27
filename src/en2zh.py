@@ -238,7 +238,7 @@ def main():
             st.download_button(
                 label="下载翻译后的Word文档",
                 data=BytesIO(bytes_data),
-                file_name=os.path.basename(translated_word_path),
+                file_name=f'{os.path.splitext(uploaded_file.name)[0]}_zh.PDF',
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
             
