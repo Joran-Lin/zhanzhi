@@ -1,0 +1,9 @@
+streamlit==1.32.0         # 用于构建Web界面
+pdf2docx==0.5.8          # PDF转Word文档
+python-docx==0.8.11      # 操作Word文档
+openai==1.12.0           # 豆包API客户端
+zhipuai==2.0.1           # 智谱AI SDK
+PyMuPDF==1.23.21         # pdf2docx的底层依赖
+lxml==4.9.4              # python-docx的XML处理
+requests==2.31.0         # API调用的基础库
+tqdm==4.66.1             # 进度条显示（pdf2docx依赖）
