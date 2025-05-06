@@ -197,7 +197,7 @@ def main():
         return
     
     # 文件上传区域
-    uploaded_file = st.file_uploader("上传PDF文件", type=["pdf"])
+    uploaded_file = st.file_uploader("上传PDF文件", type=["pdf",'.PDF'])
     
     # 语言选择
     col1, col2 = st.columns(2)
