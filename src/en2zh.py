@@ -197,7 +197,26 @@ def main():
         return
     
     # 文件上传区域
-    uploaded_file = st.file_uploader("上传PDF文件", type=["pdf",'PDF'])
+    def enforce_filename_restriction(filename, allowed_extensions):
+        file_extension = os.path.splitext(filename)[1].lower()
+        allowed_extensions = [ext.lower() for ext in allowed_extensions]
+        if file_extension not in allowed_extensions:
+            raise ValueError(f"Invalid file extension: {file_extension}. Allowed: {allowed_extensions}")
+        return True
+
+    # 允许上传的文件扩展名，支持大写和小写
+    allowed_extensions = ['.pdf', '.PDF']
+
+    # 创建文件上传组件
+    uploaded_file = st.file_uploader("请上传一个 PDF 文件", type=allowed_extensions)
+
+    if uploaded_file is not None:
+        try:
+            # 验证文件扩展名
+            enforce_filename_restriction(uploaded_file.name, allowed_extensions)
+            st.write("你已成功上传文件: ", uploaded_file.name)
+        except ValueError as e:
+            st.error(e)
     
     # 语言选择
     col1, col2 = st.columns(2)
