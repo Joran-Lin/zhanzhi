@@ -208,7 +208,7 @@ def main():
     allowed_extensions = ['.pdf', '.PDF']
 
     # 创建文件上传组件
-    uploaded_file = st.file_uploader("请上传一个 PDF 文件", type=allowed_extensions)
+    uploaded_file = st.file_uploader("请上传一个 PDF 文件")
 
     if uploaded_file is not None:
         try:
